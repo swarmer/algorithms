@@ -15,7 +15,7 @@ int main(int argc, char **argv)
         for (int j = 0; j < n; ++j)
         {
             if (i != j)
-                dist[i][j] = INT_MAX;
+                dist[i][j] = -1;
             else
                 dist[i][j] = 0;
         }
@@ -35,10 +35,10 @@ int main(int argc, char **argv)
         {
             for (int j = 0; j < n; ++j)
             {
-                int temp = dist[i][k] + dist[k][j];
-                if (temp < 0)
+                if (dist[i][k] == -1 || dist[k][j] == -1)
                     continue;
-                if (temp < dist[i][j])
+                int temp = dist[i][k] + dist[k][j];
+                if (temp < dist[i][j] || dist[i][j] == -1)
                     dist[i][j] = temp;
             }
         }

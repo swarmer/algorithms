@@ -28,6 +28,8 @@ struct VertexComparator
             return false;
         else if (d1 != -1 && d2 == -1)
             return true;
+        else if (d1 == d2)
+            return v1 < v2;
         else
             return d1 < d2;
     }

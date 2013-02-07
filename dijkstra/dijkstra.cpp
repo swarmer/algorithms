@@ -3,85 +3,74 @@
 #include <cstdio>
 #include <vector>
 #include <set>
+#include <utility>
 #include <map>
 using namespace std;
 
 
-struct Edge
+struct Graph
 {
-    int i1, i2, dist;
+    int V;
+    vector<vector<pair<int, int> > > vertices;
+};
+
+struct VertexComparator
+{
+    int *dist;
+
+    VertexComparator(int *dist) : dist(dist) {}
+
+    bool operator()(int v1, int v2) const
+    {
+        int d1 = dist[v1];
+        int d2 = dist[v2];
+        if (d1 == -1)
+            return false;
+        else if (d1 != -1 && d2 == -1)
+            return true;
+        else
+            return d1 < d2;
+    }
 };
 
 
-int closest_node(const set<int> &unvisited, map<int, int> &dist)
+vector<int> dijkstra(Graph graph, int source, int target)
 {
-    int min_node = *(unvisited.begin());
-    int min_dist = dist.count(min_node) ? dist[min_node] : -1;
-    for (set<int>::iterator it = unvisited.begin(); it != unvisited.end(); ++it) {
-        int node = *it;
-        if (!dist.count(node))
-            continue;
-        int d = dist[node];
-        if (d < min_dist || min_dist == -1) {
-            min_dist = d;
-            min_node = node;
-        }
+    vector<vector<pair<int, int> > > &vertices = graph.vertices;
+    int V = graph.V;
+    int *prev = new int[V];
+    int *dist = new int[V];
+    for (int i = 0; i < V; ++i) {
+        prev[i] = -1;
+        dist[i] = -1;
     }
-    return min_node;
-}
-
-vector<int> neighbors(vector<Edge> edges, set<int> unvisited, int node)
-{
-    vector<int> ns;
-    for (vector<Edge>::iterator it = edges.begin(); it != edges.end(); ++it) {
-        Edge e = *it;
-        if (e.i1 == node && unvisited.count(e.i2))
-            ns.push_back(e.i2);
-    }
-    return ns;
-}
-
-int basic_dist(vector<Edge> edges, int i1, int i2)
-{
-    for (vector<Edge>::iterator it = edges.begin(); it != edges.end(); ++it) {
-        Edge e = *it;
-        if (e.i1 == i1 && e.i2 == i2)
-            return e.dist;
-    }
-    return -1;
-}
-
-vector<int> dijkstra(vector<Edge> edges, int source, int target)
-{
-    set<int> unvisited;
-    for (vector<Edge>::iterator it = edges.begin(); it != edges.end(); ++it) {
-        unvisited.insert(it->i1);
-        unvisited.insert(it->i2);
-    }
-
-    map<int, int> prev, dist;
     dist[source] = 0;
+    VertexComparator cmp(dist);
+    set<int, VertexComparator> vqueue(cmp);
+    vqueue.insert(source);
 
-    while (!unvisited.empty()) {
-        int node = closest_node(unvisited, dist);
-        unvisited.erase(node);
-        if (node == target || !dist.count(node))
+    while (!vqueue.empty()) {
+        int node = *(vqueue.begin());
+        vqueue.erase(node);
+        if (node == target)
             break;
 
-        vector<int> ns = neighbors(edges, unvisited, node);
-        for (vector<int>::iterator it = ns.begin(); it != ns.end(); ++it) {
-            int n = *it;
-            int alt = dist[node] + basic_dist(edges, node, n);
-            if (!dist.count(n) || alt < dist[n]) {
-                dist[n] = alt;
-                prev[n] = node;
+        for (int i = 0; i < vertices[node].size(); ++i) {
+            int dest = vertices[node][i].first;
+            int len = vertices[node][i].second;
+            int alt = dist[node] + len;
+            if (dist[dest] == -1 || alt < dist[dest]) {
+                vqueue.erase(dest);
+                dist[dest] = alt;
+                prev[dest] = node;
+                vqueue.insert(dest);
             }
         }
     }
 
     vector<int> path;
     int link = target;
-    while (prev.count(link)) {
+    while (prev[link] != -1) {
         path.insert(path.begin(), link);
         link = prev[link];
     }
@@ -90,24 +79,20 @@ vector<int> dijkstra(vector<Edge> edges, int source, int target)
 
 int main(int argc, char *argv[])
 {
-    ifstream graph(argv[1]);
-    vector<Edge> edges;
+    int V, source, target;
+    cin >> V >> source >> target;
+    Graph graph;
+    graph.V = V;
+    graph.vertices.resize(V);
     int i1, i2, dist;
     while (true) {
-        graph >> i1 >> i2 >> dist;
-        if (graph.eof())
+        cin >> i1 >> i2 >> dist;
+        if (cin.eof())
             break;
-        Edge edge;
-        edge.i1 = i1;
-        edge.i2 = i2;
-        edge.dist = dist;
-        edges.push_back(edge);
+        graph.vertices[i1].push_back(make_pair(i2, dist));
     }
-    int source, target;
-    sscanf(argv[2], "%d", &source);
-    sscanf(argv[3], "%d", &target);
 
-    vector<int> path = dijkstra(edges, source, target);
+    vector<int> path = dijkstra(graph, source, target);
     for (vector<int>::iterator it = path.begin(); it != path.end(); ++it) {
         cout << *it << endl;
     }

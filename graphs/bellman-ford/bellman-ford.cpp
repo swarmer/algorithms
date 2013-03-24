@@ -34,14 +34,16 @@ struct Bellman_Ford
 
     bool run()
     {
-        for (int i = 0; i < E; ++i) {
-            Edge &edge = edges[i];
-            if (dist[edge.i1] == INF)
-                continue;
-            int new_dist = dist[edge.i1] + edge.dist;
-            if (dist[edge.i2] > new_dist) {
-                dist[edge.i2] = new_dist;
-                prev[edge.i2] = edge.i1;
+        for (int i = 0; i < V - 1; ++i) {
+            for (int j = 0; j < E; ++j) {
+                Edge &edge = edges[j];
+                if (dist[edge.i1] == INF)
+                    continue;
+                int new_dist = dist[edge.i1] + edge.dist;
+                if (dist[edge.i2] > new_dist) {
+                    dist[edge.i2] = new_dist;
+                    prev[edge.i2] = edge.i1;
+                }
             }
         }
         for (int i = 0; i < E; ++i) {
